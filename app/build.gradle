@@ -28,6 +28,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
 
+
 // 递归获取某目录下的所有子目录以及子文件
 List<String> getAllFilePaths(String filePath, List<String> filePathList) {
     File[] files = new File(filePath).listFiles()
@@ -109,13 +110,18 @@ def writeToFile(String filePaht, String content) {
 
 def writeRecordDetail(destFileDir, srcPath, destPath, per) {
     def filePath=destFileDir+"/RecordDetail.txt"
-    String content=per+" ： "+srcPath+"    =》   "+destPath+" "+"\n"
+    def projectPath = "pwd".execute().text.trim()
+    def tempSrc=((String)srcPath).substring(projectPath.length()+1)
+    def tempDest=((String)destPath).substring(((String)destFileDir).length()+1)
+    String content="压缩："+per+"%   "+tempSrc+"  --->  "+tempDest+" "+"\n"
     writeToFile(filePath,content)
 }
 
 def writeRecordList(destFileDir, srcPath) {
+    def projectPath = "pwd".execute().text.trim()
     def filePath=destFileDir+"/RecordList.txt"
-    writeToFile(filePath,srcPath+"\n")
+    def tempSrc=((String)srcPath).substring(projectPath.length()+1)
+    writeToFile(filePath,tempSrc+"\n")
 }
 
 def compress(String destFileDir, String srcPath, String destPath) {
