@@ -89,7 +89,36 @@ def getAvailableFileList(List<String> allFileList) {
     return tempList
 }
 
-def compress(String srcPath, String destPath) {
+def writeToFile(String filePaht, String content) {
+    try {
+//        String content = "a dog will be write in file";
+//        File file = new File("test_appendfile2.txt");
+        File file = new File(filePaht)
+        if (!file.exists()) {
+            file.createNewFile()
+        }
+        FileWriter fileWriter = new FileWriter(file.getAbsoluteFile(),true)
+        BufferedWriter bw = new BufferedWriter(fileWriter)
+        bw.write(content)
+        bw.close()
+//        System.out.println("finish")
+    } catch (IOException e) {
+        e.printStackTrace()
+    }
+}
+
+def writeRecordDetail(destFileDir, srcPath, destPath, per) {
+    def filePath=destFileDir+"/RecordDetail.txt"
+    String content=per+" ： "+srcPath+"    =》   "+destPath+" "+"\n"
+    writeToFile(filePath,content)
+}
+
+def writeRecordList(destFileDir, srcPath) {
+    def filePath=destFileDir+"/RecordList.txt"
+    writeToFile(filePath,srcPath+"\n")
+}
+
+def compress(String destFileDir, String srcPath, String destPath) {
     File tempFile = new File(destPath)
     if (tempFile.exists()) {
         tempFile.delete()
@@ -112,29 +141,66 @@ def compress(String srcPath, String destPath) {
     def outLength = outFile.length()
 
     def percent = (intpuLength - outLength) / intpuLength
-    def a = (int) (percent * 100)
-    println "输入文件大小：" + intpuLength +"  输出文件大小：" + outLength +"  图片的压缩了：" + a + "%"
+    def per = (int) (percent * 100)
+    println "输入文件大小：" + intpuLength + "  输出文件大小：" + outLength + "  图片的压缩了：" + per + "%"
+    writeRecordDetail(destFileDir, srcPath, destPath, per)
+    writeRecordList(destFileDir, srcPath)
 }
 
 
-def getDestPath(String path) {
+def getDestPath(String destPath, String path) {
 
     def projectPath = "pwd".execute().text.trim()
-    def mDestPath = "/Users/tal/Desktop/mypng"
     String tempStr = path.substring(((String) projectPath).length())
-    return mDestPath + tempStr
+    return destPath + tempStr
 }
+
+
+def getFileLength(String path) {
+    File file = new File(path)
+    return file.length()
+}
+
+def getSrcFileLenght(List<String> srcList) {
+    if (srcList == null || srcList.size() == 0)
+        return 0
+    def total = 0
+    for (String path : srcList) {
+        total += getFileLength(path)
+    }
+    return total
+}
+
+def getReducePercent(long srcTotal, long destTotal) {
+
+    def percent = (srcTotal - destTotal) / srcTotal
+    def per = (int) (percent * 100)
+    return per + "%"
+}
+
 
 //----------------------------入口函数---------------------------------------
 task pngCompress(type: Copy) {
 
+    def destPath = "/Users/tal/Desktop/mypng"
+
     println("-------------------------pngCompress开始启动--------------------------------")
     def allFileList = getAllFilePath()
     def availableFileList = getAvailableFileList(allFileList)
+    def srcTotalLenght = getSrcFileLenght(availableFileList)
+    def destTotalLenght = 0
     for (String path : availableFileList) {
-        String getDestPath = getDestPath(path)
-        compress(path, getDestPath)
+        String getDestPath = getDestPath(destPath, path)
+        destTotalLenght += getFileLength(getDestPath)
+        compress(destPath, path, getDestPath)
     }
     println("-------------------------pngCompress运行完成--------------------------------")
+
+    println ""
+    println "----------------------------------------------------------------------------"
+    println("原图片大小：" + srcTotalLenght + " 压缩后图片大小：" + destTotalLenght + "  总体减少比例：" + getReducePercent(srcTotalLenght, destTotalLenght))
+    println "----------------------------------------------------------------------------"
+    println ""
+
 
 }

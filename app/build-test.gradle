@@ -222,17 +222,33 @@ def getDestPath(String path) {
     return mDestPath + tempStr
 }
 
+def getSrcFileLenght(List<String> srcList){
+    if(srcList==null||srcList.size()==0)
+        return 0
+    def total=0;
+    for(String path:srcList){
+        File file=new File(path)
+        total+=file.length()
+    }
+    return total
+}
+
 //---------------------------------------------------------------------------------------
 task pngCompress(type: Copy) {
 
     def allFileList = getAllFilePath()
     def availableFileList = getAvailableFileList(allFileList)
 
+    def srcTotalLenght=getSrcFileLenght(availableFileList)
     for (String path : availableFileList) {
         println("需要处理png图片：" + path)
         String getDestPath = getDestPath(path)
         compress(path, getDestPath)
     }
+
+    println "原图片大小："+srcTotalLenght
+
+
 
 //    println "-------------------开始执行图片压缩任务--------------------"
 //
