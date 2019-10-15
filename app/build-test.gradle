@@ -1,0 +1,245 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion "29.0.1"
+    defaultConfig {
+        applicationId "com.stormdzh.android.pngcompress"
+        minSdkVersion 15
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
+
+
+task makeJar(type: Copy) {
+    //删除存在的jar包,这里打包jar包名字是MyUtils.jar
+    delete 'build/libs/MobileAssistant.jar'
+    //设置拷贝的文件 from路径下的文件into到build/libs/路径下，方便找到
+    from('build/intermediates/packaged-classes/debug/')
+    //打进jar包后的文件目录
+    into('build/libs/')
+    //将classes.jar放入build/libs/目录下
+    //include ,exclude参数来设置过滤
+    //（我们只关心classes.jar这个文件）
+    include('classes.jar')
+    //重命名
+    rename('classes.jar', 'MobileAssistant.jar')
+}
+makeJar.dependsOn(build)
+
+//测试方法
+def mTest() {
+
+    println("mtest")
+}
+
+//测试方法
+def mTest(String path) {
+
+    println("mtest:" + path)
+}
+
+//测试方法
+def mTest(String path, String outPaht) {
+
+    def z = "mtest " + path + "  out:" + outPaht
+    return z
+}
+
+// 递归获取某目录下的所有子目录以及子文件
+List<String> getAllFilePaths(String filePath, List<String> filePathList) {
+    File[] files = new File(filePath).listFiles()
+
+    if (files == null) {
+        return filePathList
+    }
+
+    for (File file : files) {
+        if (file.isDirectory()) {
+            filePathList.add(file.getPath() + " <------------这是文件夹")
+            getAllFilePaths(file.getAbsolutePath(), filePathList)
+        } else {
+            filePathList.add(file.getPath())
+        }
+    }
+
+    return filePathList
+
+}
+
+def getAllFilePath() {
+    println "cd ..".execute().text.trim()
+    def projectPath = "pwd".execute().text.trim()
+    println("功能目录：" + projectPath)
+    List<String> filePaths = new ArrayList<>()
+    filePaths = getAllFilePaths(projectPath, filePaths)
+
+    for (String path : filePaths) {
+        System.out.println(path)
+        println("递归获取路径：" + path)
+    }
+    return filePaths
+}
+
+def isJustPng(String path) {
+    if (path == null || path.size() == 0) {
+        return false
+    }
+    if (path.endsWith(".png") && !path.contains(".9")) {
+        return true
+    }
+    return false
+
+}
+
+
+def getAvailableFileList(List<String> allFileList) {
+    List<String> tempList = new ArrayList<>()
+
+    if (allFileList == null || allFileList.size() == 0)
+        return
+    for (String path : allFileList) {
+        if (isJustPng(path))
+            tempList.add(path)
+    }
+
+    return tempList
+}
+
+
+def getResource() {
+    println "cd ..".execute().text.trim()
+    def projectPath = "pwd".execute().text.trim()
+    println("功能目录：" + projectPath)
+    File projectFile = new File(projectPath)
+    def resourceList = projectFile.listFiles()
+
+    List<String> filePaths = new ArrayList<>()
+    filePaths = getAllFilePaths(projectPath, filePaths)
+
+    for (String path : filePaths) {
+        System.out.println(path)
+        println("递归获取路径：" + path)
+    }
+    return resourceList
+}
+
+
+//task compress(type: Exec) {
+//task compress(type: Copy) {
+def compress() {
+
+    println "cd ..".execute().text.trim()
+    def projectPath = "pwd".execute().text.trim()
+    println("功能目录：" + projectPath)
+
+    println("--------------开始-----------------")
+
+    String inputPath = "/Users/tal/Desktop/test/PngCompress/app/src/main/res/mipmap-xxhdpi/test001.png"
+    String outPath = "/Users/tal/Desktop/test/PngCompress/app/src/main/res/mipmap-xxhdpi/test001.png.tmp"
+    String cmd = projectPath + "/pngcompress/pngquant --force --skip-if-larger " + inputPath + " --output " + outPath
+    println("执行命令为：" + cmd.execute().text.trim())
+    //获取文件的大小，计算文件压缩的比例是多少
+    File inputFile = new File(inputPath)
+    def intpuLength = inputFile.length()
+    println("输入文件大小：" + intpuLength)
+
+    File outFile = new File(outPath)
+    def outLength = outFile.length()
+    println("输出文件大小：" + outLength)
+
+    def percent = (intpuLength - outLength) / intpuLength
+    println "图片的压缩了：" + percent
+    def a = (int) (percent * 100)
+
+    println "图片的压缩了：" + a + "%"
+
+    mTest()
+    mTest("111.png")
+
+    println(mTest("111.pn", "222.png"))
+
+    println(getResource())
+}
+
+def compress(String srcPath, String destPath) {
+    File tempFile = new File(destPath)
+    if (tempFile.exists()) {
+        tempFile.delete()
+    }
+    def dir = tempFile.getParent()
+    println("文件夹路径：" + dir)
+    if (!new File(dir).exists()) {
+        new File(dir).mkdirs()
+    }
+
+
+    def projectPath = "pwd".execute().text.trim()
+    String cmd = projectPath + "/pngcompress/pngquant --force --skip-if-larger " + srcPath + " --output " + destPath
+    println("执行命令为：" + cmd)
+    print(cmd.execute().text.trim())
+
+    //获取文件的大小，计算文件压缩的比例是多少
+    File inputFile = new File(srcPath)
+    def intpuLength = inputFile.length()
+    println("输入文件大小：" + intpuLength)
+
+    File outFile = new File(destPath)
+    def outLength = outFile.length()
+    println("输出文件大小：" + outLength)
+
+    def percent = (intpuLength - outLength) / intpuLength
+    println "图片的压缩了：" + percent
+    def a = (int) (percent * 100)
+
+    println "图片的压缩了：" + a + "%"
+}
+
+
+def getDestPath(String path) {
+
+    def projectPath = "pwd".execute().text.trim()
+    def mDestPath = "/Users/tal/Desktop/mypng"
+    String tempStr = path.substring(((String) projectPath).length())
+    return mDestPath + tempStr
+}
+
+//---------------------------------------------------------------------------------------
+task pngCompress(type: Copy) {
+
+    def allFileList = getAllFilePath()
+    def availableFileList = getAvailableFileList(allFileList)
+
+    for (String path : availableFileList) {
+        println("需要处理png图片：" + path)
+        String getDestPath = getDestPath(path)
+        compress(path, getDestPath)
+    }
+
+//    println "-------------------开始执行图片压缩任务--------------------"
+//
+//    println("获取png图片的地址")
+//    String path = "/Users/tal/Desktop/test/PngCompress/app/src/main/res/mipmap-xxhdpi/test001.png";
+//    println("图片的地址是：" + path)
+//    println("开始压缩图片文件")
+////            pngquant --force --skip-if-larger $1 --output $1.tmp
+//    println "-------------------结束执行图片压缩任务--------------------"
+}

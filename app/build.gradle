@@ -27,3 +27,114 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
+
+// 递归获取某目录下的所有子目录以及子文件
+List<String> getAllFilePaths(String filePath, List<String> filePathList) {
+    File[] files = new File(filePath).listFiles()
+
+    if (files == null) {
+        return filePathList
+    }
+
+    for (File file : files) {
+        if (file.isDirectory()) {
+//            filePathList.add(file.getPath() + " <------------这是文件夹")
+            filePathList.add(file.getPath())
+            getAllFilePaths(file.getAbsolutePath(), filePathList)
+        } else {
+            filePathList.add(file.getPath())
+        }
+    }
+
+    return filePathList
+
+}
+
+def getAllFilePath() {
+    println "cd ..".execute().text.trim()
+    def projectPath = "pwd".execute().text.trim()
+    println("功能目录：" + projectPath)
+    List<String> filePaths = new ArrayList<>()
+    filePaths = getAllFilePaths(projectPath, filePaths)
+
+//    for (String path : filePaths) {
+//        System.out.println(path)
+//        println("递归获取路径：" + path)
+//    }
+    return filePaths
+}
+
+def isJustPng(String path) {
+    if (path == null || path.size() == 0) {
+        return false
+    }
+    if (path.endsWith(".png") && !path.contains(".9")) {
+        return true
+    }
+    return false
+
+}
+
+
+def getAvailableFileList(List<String> allFileList) {
+    List<String> tempList = new ArrayList<>()
+
+    if (allFileList == null || allFileList.size() == 0)
+        return
+    for (String path : allFileList) {
+        if (isJustPng(path))
+            tempList.add(path)
+    }
+
+    return tempList
+}
+
+def compress(String srcPath, String destPath) {
+    File tempFile = new File(destPath)
+    if (tempFile.exists()) {
+        tempFile.delete()
+    }
+    def dir = tempFile.getParent()
+//    println("文件夹路径：" + dir)
+    if (!new File(dir).exists()) {
+        new File(dir).mkdirs()
+    }
+
+
+    def projectPath = "pwd".execute().text.trim()
+    String cmd = projectPath + "/pngcompress/pngcompress --force --skip-if-larger " + srcPath + " --output " + destPath
+    print(cmd.execute().text.trim())
+    //获取文件的大小，计算文件压缩的比例是多少
+    File inputFile = new File(srcPath)
+    def intpuLength = inputFile.length()
+
+    File outFile = new File(destPath)
+    def outLength = outFile.length()
+
+    def percent = (intpuLength - outLength) / intpuLength
+    def a = (int) (percent * 100)
+    println "输入文件大小：" + intpuLength +"  输出文件大小：" + outLength +"  图片的压缩了：" + a + "%"
+}
+
+
+def getDestPath(String path) {
+
+    def projectPath = "pwd".execute().text.trim()
+    def mDestPath = "/Users/tal/Desktop/mypng"
+    String tempStr = path.substring(((String) projectPath).length())
+    return mDestPath + tempStr
+}
+
+//----------------------------入口函数---------------------------------------
+task pngCompress(type: Copy) {
+
+    println("-------------------------pngCompress开始启动--------------------------------")
+    def allFileList = getAllFilePath()
+    def availableFileList = getAvailableFileList(allFileList)
+    for (String path : availableFileList) {
+        String getDestPath = getDestPath(path)
+        compress(path, getDestPath)
+    }
+    println("-------------------------pngCompress运行完成--------------------------------")
+
+}
